@@ -1,0 +1,526 @@
+---
+title: "Tarea 5. Diferenciación e integración numérica."
+author: "Cristian Jaime Almaguer"
+format: 
+html:
+grid: 
+body-width: 1000px
+editor: visual
+jupyter: python3
+---
+
+```{python}
+import matplotlib.pyplot as plt
+import numpy as np
+import math
+from scipy.interpolate import lagrange
+from numpy.polynomial.polynomial import Polynomial
+from scipy.interpolate import CubicSpline
+
+import plotly.graph_objects as go
+from scipy import integrate
+import numdifftools as nd
+from scipy.stats import norm, gamma
+```
+
+------------------------------------------------------------------------
+
+# Ejercicio 1
+
+## a) $f(x)=e^{2x}-\cos 2x$, $x\in [0,2]$
+
+```{python}
+f = lambda x: np.exp(2*x) - np.cos(2*x)
+f1 = lambda x: 2*np.exp(2*x) + 2*np.sin(2*x)
+f2 = lambda x: 4*np.exp(2*x) + 4*np.cos(2*x)
+
+x_values = np.linspace(0,2,200)
+
+plt.figure(figsize=(8,6))
+plt.plot(x_values, f(x_values), color="darkred", label="f(x)")
+plt.grid()
+plt.legend()
+plt.show()
+```
+
+### Derivadas aproximadas y exacta
+
+```{python}
+df_01 = nd.Derivative(f, step=0.1)
+df_005 = nd.Derivative(f, step=0.05)
+df_scipy = nd.Derivative(f)  # default step
+
+plt.figure(figsize=(8,6))
+plt.plot(x_values, df_01(x_values), label="h=0.1", color="teal")
+plt.plot(x_values, df_005(x_values), label="h=0.05", color="royalblue")
+plt.plot(x_values, df_scipy(x_values), label="numdifftools", color="aqua")
+plt.plot(x_values, f1(x_values), label="Derivada exacta", color="goldenrod")
+plt.legend()
+plt.grid()
+plt.title("Aproximación de la derivada de f(x)")
+plt.show()
+```
+
+### Errores absolutos de la primera derivada
+
+```{python}
+plt.figure(figsize=(8,6))
+plt.plot(x_values, abs(f1(x_values)-df_01(x_values)), label="h=0.1", color="teal")
+plt.plot(x_values, abs(f1(x_values)-df_005(x_values)), label="h=0.05", color="royalblue")
+plt.plot(x_values, abs(f1(x_values)-df_scipy(x_values)), label="numdifftools", color="aqua")
+plt.legend()
+plt.grid()
+plt.title("Errores absolutos de la primera derivada")
+plt.show()
+```
+
+### Segunda derivada
+
+```{python}
+ddf_01 = nd.Derivative(f, step=0.1, n=2)
+ddf_005 = nd.Derivative(f, step=0.05, n=2)
+
+plt.figure(figsize=(8,6))
+plt.plot(x_values, ddf_01(x_values), label="h=0.1", color="teal")
+plt.plot(x_values, ddf_005(x_values), label="h=0.05", color="royalblue")
+plt.plot(x_values, f2(x_values), label="Derivada segunda exacta", color="goldenrod")
+plt.legend()
+plt.grid()
+plt.title("Aproximación de la segunda derivada de f(x)")
+plt.show()
+```
+
+### Errores absolutos segunda derivada
+
+```{python}
+plt.figure(figsize=(8,6))
+plt.plot(x_values, abs(f2(x_values)-ddf_01(x_values)), label="h=0.1", color="teal")
+plt.plot(x_values, abs(f2(x_values)-ddf_005(x_values)), label="h=0.05", color="royalblue")
+plt.legend()
+plt.grid()
+plt.title("Errores absolutos de la segunda derivada")
+plt.show()
+```
+
+------------------------------------------------------------------------
+
+## b) $f(x)=\log(x+2)-(x+1)^2$, $x\in [0,5]$
+
+```{python}
+f = lambda x: np.log(x+2) - (x+1)**2
+f1 = lambda x: 1/(x+2) - 2*(x+1)
+f2 = lambda x: -1/(x+2)**2 - 2
+
+x_values = np.linspace(0,5,200)
+
+plt.figure(figsize=(8,6))
+plt.plot(x_values, f(x_values), color="darkred", label="f(x)")
+plt.grid()
+plt.legend()
+plt.show()
+```
+
+### Derivadas
+
+```{python}
+df_01 = nd.Derivative(f, step=0.1)
+df_005 = nd.Derivative(f, step=0.05)
+df_scipy = nd.Derivative(f)
+
+plt.figure(figsize=(8,6))
+plt.plot(x_values, df_01(x_values), label="h=0.1", color="teal")
+plt.plot(x_values, df_005(x_values), label="h=0.05", color="royalblue")
+plt.plot(x_values, df_scipy(x_values), label="numdifftools", color="aqua")
+plt.plot(x_values, f1(x_values), label="Derivada exacta", color="goldenrod")
+plt.legend()
+plt.grid()
+plt.title("Aproximación de la derivada de f(x)")
+plt.show()
+```
+
+### Errores absolutos de la primera derivada
+
+```{python}
+plt.figure(figsize=(8,6))
+plt.plot(x_values, abs(f1(x_values)-df_01(x_values)), label="h=0.1", color="teal")
+plt.plot(x_values, abs(f1(x_values)-df_005(x_values)), label="h=0.05", color="royalblue")
+plt.plot(x_values, abs(f1(x_values)-df_scipy(x_values)), label="numdifftools", color="aqua")
+plt.legend()
+plt.grid()
+plt.title("Errores absolutos de la primera derivada")
+plt.show()
+```
+
+### Segunda derivada
+
+```{python}
+ddf_01 = nd.Derivative(f, step=0.1, n=2)
+ddf_005 = nd.Derivative(f, step=0.05, n=2)
+
+plt.figure(figsize=(8,6))
+plt.plot(x_values, ddf_01(x_values), label="h=0.1", color="teal")
+plt.plot(x_values, ddf_005(x_values), label="h=0.05", color="royalblue")
+plt.plot(x_values, f2(x_values), label="Derivada segunda exacta", color="goldenrod")
+plt.legend()
+plt.grid()
+plt.title("Aproximación de la segunda derivada de f(x)")
+plt.show()
+```
+
+### Errores absolutos segunda derivada
+
+```{python}
+plt.figure(figsize=(8,6))
+plt.plot(x_values, abs(f2(x_values)-ddf_01(x_values)), label="h=0.1", color="teal")
+plt.plot(x_values, abs(f2(x_values)-ddf_005(x_values)), label="h=0.05", color="royalblue")
+plt.legend()
+plt.grid()
+plt.title("Errores absolutos de la segunda derivada")
+plt.show()
+```
+
+------------------------------------------------------------------------
+
+## c) $f(x)=\sqrt{x} \sin(x^2)$, $x\in [0,\pi]$
+
+```{python}
+f = lambda x: np.sqrt(x)*np.sin(x**2)
+f1 = lambda x: 2*x*np.sqrt(x)*np.cos(x**2) + (np.sin(x**2)/(2*np.sqrt(x)))
+f2 = lambda x: 4*np.sqrt(x)*np.cos(x**2) - np.sin(x**2)*(4*x**2*np.sqrt(x)+1/(4*x*np.sqrt(x)))
+
+x_values = np.linspace(0.001, np.pi, 200) # evitar x=0 para evitar 0 en denominador
+
+plt.figure(figsize=(8,6))
+plt.plot(x_values, f(x_values), color="darkred", label="f(x)")
+plt.grid()
+plt.legend()
+plt.show()
+```
+
+### Derivadas
+
+```{python}
+df_01 = nd.Derivative(f, step=0.1)
+df_005 = nd.Derivative(f, step=0.05)
+df_scipy = nd.Derivative(f)
+
+plt.figure(figsize=(8,6))
+plt.plot(x_values, df_01(x_values), label="h=0.1", color="teal")
+plt.plot(x_values, df_005(x_values), label="h=0.05", color="royalblue")
+plt.plot(x_values, df_scipy(x_values), label="numdifftools", color="aqua")
+plt.plot(x_values, f1(x_values), label="Derivada exacta", color="goldenrod")
+plt.legend()
+plt.grid()
+plt.title("Aproximación de la derivada de f(x)")
+plt.show()
+```
+
+### Errores absolutos de la primera derivada
+
+```{python}
+plt.figure(figsize=(8,6))
+plt.plot(x_values, abs(f1(x_values)-df_01(x_values)), label="h=0.1", color="teal")
+plt.plot(x_values, abs(f1(x_values)-df_005(x_values)), label="h=0.05", color="royalblue")
+plt.plot(x_values, abs(f1(x_values)-df_scipy(x_values)), label="numdifftools", color="aqua")
+plt.legend()
+plt.grid()
+plt.title("Errores absolutos de la primera derivada")
+plt.show()
+```
+
+### Segunda derivada
+
+```{python}
+ddf_01 = nd.Derivative(f, step=0.1, n=2)
+ddf_005 = nd.Derivative(f, step=0.05, n=2)
+
+plt.figure(figsize=(8,6))
+plt.plot(x_values, ddf_01(x_values), label="h=0.1", color="teal")
+plt.plot(x_values, ddf_005(x_values), label="h=0.05", color="royalblue")
+plt.plot(x_values, f2(x_values), label="Derivada segunda exacta", color="goldenrod")
+plt.legend()
+plt.grid()
+plt.title("Aproximación de la segunda derivada de f(x)")
+plt.show()
+```
+
+### Errores absolutos segunda derivada
+
+```{python}
+plt.figure(figsize=(8,6))
+plt.plot(x_values, abs(f2(x_values)-ddf_01(x_values)), label="h=0.1", color="teal")
+plt.plot(x_values, abs(f2(x_values)-ddf_005(x_values)), label="h=0.05", color="royalblue")
+plt.legend()
+plt.grid()
+plt.title("Errores absolutos de la segunda derivada")
+plt.show()
+```
+
+------------------------------------------------------------------------
+
+# Ejercicio 2
+
+## a) $\int_0^1 e^{-x^2}\,dx$
+
+```{python}
+f = lambda x: np.exp(-x**2)
+a, b = 0, 1
+
+int_quad = integrate.quad(f, a, b)
+print(f"Integración con quad: {int_quad[0]}, error: {int_quad[1]}")
+
+N = 50000
+x_rand = np.random.uniform(a, b, N)
+y_rand = np.random.uniform(0, 1, N)
+puntos_in = y_rand <= f(x_rand)
+area_mc = (b-a)*1*sum(puntos_in)/N
+print(f"Integración Montecarlo: {area_mc}")
+
+# Gráfica
+x_values = np.linspace(a, b, 100)
+plt.figure(figsize=(8,6))
+plt.plot(x_values, f(x_values), label="f(x)")
+plt.fill_between(x_values, 0, f(x_values), alpha=0.4, color="green")
+plt.grid()
+plt.legend()
+plt.show()
+```
+
+------------------------------------------------------------------------
+
+## b) $\int_0^\pi \sin(x^2)\,dx$
+
+```{python}
+f = lambda x: np.sin(x**2)
+a, b = 0, np.pi
+int_quad = integrate.quad(f, a, b)
+print(f"Integración con quad: {int_quad[0]}, error: {int_quad[1]}")
+
+N = 500000
+x_rand = np.random.uniform(a, b, N)
+y_rand = np.random.uniform(-1, 1, N)
+puntos_in = np.abs(y_rand) <= np.abs(f(x_rand))
+puntos_in = puntos_in * (np.sign(y_rand)==np.sign(f(x_rand)))
+area_mc = (b-a)*np.sum(puntos_in)/N
+print(f"Integración Montecarlo: {area_mc}")
+
+# Gráfica
+x_values = np.linspace(a, b, 100)
+plt.figure(figsize=(8,6))
+plt.plot(x_values, f(x_values), label="f(x)")
+plt.fill_between(x_values, 0, f(x_values), alpha=0.4, color="green")
+plt.grid()
+plt.legend()
+plt.show()
+```
+
+------------------------------------------------------------------------
+
+## c) $\int_0^\pi \frac{\sin x}{x}\,dx$
+
+```{python}
+f = lambda x: np.sinc(x/np.pi)    # sinc(x) = sin(pi x)/(pi x), por lo que sin(x)/x = sinc(x/pi)
+a, b = 0, np.pi
+int_quad = integrate.quad(lambda x: np.sin(x)/x if x!=0 else 1, a, b)
+print(f"Integración con quad: {int_quad[0]}, error: {int_quad[1]}")
+
+N = 100000
+x_rand = np.random.uniform(a, b, N)
+y_rand = np.random.uniform(0, 1, N)
+puntos_in = y_rand <= f(x_rand)
+area_mc = (b-a)*sum(puntos_in)/N
+print(f"Integración Montecarlo: {area_mc}")
+
+# Gráfica
+x_values = np.linspace(a, b, 100)
+plt.figure(figsize=(8,6))
+plt.plot(x_values, lambda x: np.sin(x)/x if x!=0 else 1, label="f(x)")
+plt.fill_between(x_values, 0, [np.sin(x)/x if x!=0 else 1 for x in x_values], alpha=0.4, color="green")
+plt.grid()
+plt.legend()
+plt.show()
+```
+
+------------------------------------------------------------------------
+
+## d) $\int_0^\infty e^{-x^2} \cos(x) dx$
+
+```{python}
+f = lambda x: np.exp(-x**2)*np.cos(x)
+int_quad = integrate.quad(f, 0, np.inf)
+print(f"Integración con quad: {int_quad[0]}, error: {int_quad[1]}")
+```
+
+------------------------------------------------------------------------
+
+## e) $\int_0^1 x^x dx$
+
+```{python}
+f = lambda x: x**x
+int_quad = integrate.quad(f, 0, 1)
+print(f"Integración con quad: {int_quad[0]}, error: {int_quad[1]}")
+```
+
+------------------------------------------------------------------------
+
+## f) $\int_1^5 e^{-x^2} x^3 dx$
+
+```{python}
+f = lambda x: np.exp(-x**2)*x**3
+int_quad = integrate.quad(f, 1, 5)
+print(f"Integración con quad: {int_quad[0]}, error: {int_quad[1]}")
+```
+
+------------------------------------------------------------------------
+
+## g) $\int_0^1 \sqrt{1-x^2} dx$
+
+```{python}
+f = lambda x: np.sqrt(1-x**2)
+a, b = 0, 1
+int_quad = integrate.quad(f, a, b)
+print(f"Integración con quad: {int_quad[0]}, error: {int_quad[1]}")
+
+N = 100000
+x_rand = np.random.uniform(a, b, N)
+y_rand = np.random.uniform(0, 1, N)
+puntos_in = y_rand <= f(x_rand)
+area_mc = (b-a)*sum(puntos_in)/N
+print(f"Integración Montecarlo: {area_mc}")
+
+# Gráfica
+x_values = np.linspace(a, b, 100)
+plt.figure(figsize=(8,6))
+plt.plot(x_values, f(x_values), label="f(x)")
+plt.fill_between(x_values, 0, f(x_values), alpha=0.4, color="green")
+plt.grid()
+plt.legend()
+plt.axis('square')
+plt.show()
+```
+
+------------------------------------------------------------------------
+
+## h) $\int_0^\infty \frac{x}{e^x-1} dx$
+
+```{python}
+f = lambda x: x/(np.exp(x)-1) if x!=0 else 1
+int_quad = integrate.quad(f, 0, np.inf)
+print(f"Integración con quad: {int_quad[0]}, error: {int_quad[1]}")
+```
+
+------------------------------------------------------------------------
+
+## i) $\int_0^1 \frac{1}{\sqrt{x^4+1}} dx$
+
+```{python}
+f = lambda x: 1/np.sqrt(x**4+1)
+int_quad = integrate.quad(f, 0, 1)
+print(f"Integración con quad: {int_quad[0]}, error: {int_quad[1]}")
+```
+
+------------------------------------------------------------------------
+
+# Ejercicio 3
+
+## a) $\int_{-1}^{1}\int_1^2 (3y^2-x^2+5) dx\,dy$
+
+```{python}
+f = lambda y, x: 3*y**2 - x**2 + 5
+a, b = -1, 1
+c, d = 1, 2
+int_quad = integrate.dblquad(f, c, d, lambda x: a, lambda x: b)
+print(f"Integral doble: {int_quad[0]}, error: {int_quad[1]}")
+```
+
+## b) $\int_{0}^{6}\int_1^5 \sqrt{x+4y} dx\,dy$
+
+```{python}
+f = lambda y, x: np.sqrt(x + 4*y)
+a, b = 0, 6
+c, d = 1, 5
+int_quad = integrate.dblquad(f, c, d, lambda x: a, lambda x: b)
+print(f"Integral doble: {int_quad[0]}, error: {int_quad[1]}")
+```
+
+## c) $\int_{1}^{e}\int_0^{\log(x)} x^3 dx\,dy$
+
+```{python}
+from numpy import log, e
+f = lambda y, x: x**3
+a, b = 1, np.e
+int_quad = integrate.dblquad(f, 0, lambda x: np.log(x), lambda x: a, lambda x: b)
+print(f"Integral doble: {int_quad[0]}, error: {int_quad[1]}")
+```
+
+## d) $\iint_D 30y e^x dx dy$ donde $D$ es la región $y=x/4$ a $y=x$, $x \in [0,4]$
+
+```{python}
+f = lambda y, x: 30*y*np.exp(x)
+int_quad = integrate.dblquad(f, 0, 4, lambda x: x/4, lambda x: x)
+print(f"Integral doble: {int_quad[0]}, error: {int_quad[1]}")
+integral_exacta = 225/8*(5*np.exp(4)-1)
+error_absoluto = abs(integral_exacta - int_quad[0])
+print(f'El error absoluto es:{error_absoluto}')
+```
+
+## e) $\iiint_B z e^{x+y} dx\,dy\,dz,\, B=[0,1]^3$
+
+```{python}
+f = lambda z, y, x: z * np.exp(x + y)
+int_triple = integrate.tplquad(f, 0, 1, lambda x: 0, lambda x: 1, lambda x, y: 0, lambda x, y: 1)
+print(f"Integral triple: {int_triple[0]}, error: {int_triple[1]}")
+```
+
+## f) $\int_0^1 \int_0^x \int_0^y (y+xz) dz\,dy\,dx$
+
+```{python}
+f = lambda z, y, x: y + x*z
+int_triple = integrate.tplquad(f, 0, 1, lambda x: 0, lambda x: x, lambda x, y: 0, lambda x, y: y)
+print(f"Integral triple: {int_triple[0]}, error: {int_triple[1]}")
+```
+
+------------------------------------------------------------------------
+
+# Ejercicio 4
+
+Distribución gamma: $f(x, a)= \frac{x^{a-1} e^{-x}}{\Gamma (a)}$
+
+```{python}
+a = 1.9
+
+x_values = np.linspace(0, gamma.ppf(0.99, a), 500)
+plt.figure(figsize=(8,6))
+plt.plot(x_values, gamma.pdf(x_values, a), label="Función de densidad")
+plt.grid()
+plt.legend()
+plt.show()
+```
+
+Elegimos el intervalo $[1,3]$ para calcular la integral.
+
+```{python}
+a1 = 1
+b1 = 3
+
+plt.figure(figsize=(8,6))
+plt.plot(x_values, gamma.pdf(x_values, a), label="Función de densidad")
+plt.fill_between(np.linspace(a1,b1, 500), y1=0, y2=gamma.pdf(np.linspace(a1,b1, 500), a), color="green", alpha=0.5)
+plt.grid()
+plt.legend()
+plt.show()
+```
+
+Integral con `integrate.quad`
+
+```{python}
+integral = integrate.quad(gamma.pdf, a1, b1, args = (a,))
+print(f'La aproximación de la integral es: {integral[0]}, con un error aproximado de {integral[1]}')
+```
+
+Con el método `cdf`:
+
+```{python}
+prob = gamma.cdf(3, a) - gamma.cdf(1, a)
+print(f"Probabilidad con CDF: {prob}")
+```
